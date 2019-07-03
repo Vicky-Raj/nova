@@ -34,19 +34,26 @@ int isHigher(TokenType stack,TokenType buff);
 int opToNum(TokenType type);
 ASTNode* createOpNode(TokenType type,ASTNode* left,ASTNode* right);
 
-ASTNode* parseExpression(Token** tokens,TokenType end){
+ASTNode* parseExpression(Token** tokens){
     TokenStack* arithmeticStack = initTokenStack();
     TokenStack* relationalStack = initTokenStack();
     TokenStack* logicalStack = initTokenStack();
     TreeStack* resultStack = initTreeStack();
     Token* last = NULL;
-    while((*tokens)->tokenType != end)
+
+    while(1)
     {
         TokenType lookahead = (*tokens)->tokenType;
+
+        if(last != NULL && (last->tokenType == CONSTANT || last->tokenType == IDENTIFIER) && (lookahead == CONSTANT || lookahead == IDENTIFIER)){
+            printf("Invalid Syntax\n");
+            exit(0);
+        }
 
         if(isRealationalToken(lookahead)){
             if(!emptyTokenStack(relationalStack)){
                 printf("Invalid Syntax\n");
+                exit(0);
             }else
             {
                 while(!emptyTokenStack(arithmeticStack) && arithmeticStack->top->token->tokenType != OPARA)
@@ -153,9 +160,30 @@ ASTNode* parseExpression(Token** tokens,TokenType end){
             pushNode(resultStack,createASTNode(TOKEN,*tokens));
         }
         else if(lookahead == IDENTIFIER){
+            last = *tokens;
             pushNode(resultStack,parseIdentifier(tokens));
+            continue;
         }
-
+        else if(lookahead == OSQUARE)
+        {
+            last = *tokens;
+            pushNode(resultStack,parseList(tokens));
+            continue;
+        }
+        else if(lookahead == OCURL){
+            last = *tokens;
+            pushNode(resultStack,parseDict(tokens));
+            continue;
+        }
+        else
+        {
+            if(last == NULL){
+                printf("Invalid Syntax\n");
+                exit(0);
+            }
+            break;
+        }
+        
         last = *tokens;
         *tokens = (*tokens)->next;
     }
@@ -187,7 +215,11 @@ ASTNode* parseExpression(Token** tokens,TokenType end){
         }
     }
     
-    return popNode(resultStack);
+    ASTNode* expression = createASTNode(EXPRESSION,NULL);
+    if(!emptyTreeStack(resultStack)){
+        addChild(expression,popNode(resultStack));
+    }
+    return expression;
 }
 
 void pushToken(TokenStack* stack,Token* token){
@@ -205,6 +237,10 @@ void pushNode(TreeStack* stack, ASTNode* node){
 }
 
 Token* popToken(TokenStack* stack){
+    if(stack->top == NULL){
+        printf("Invalid syntax\n");
+        exit(0);
+    }
     TokenStackNode* temp = stack->top->next;
     Token* token = stack->top->token;
     free(stack->top);
@@ -213,6 +249,10 @@ Token* popToken(TokenStack* stack){
 }
 
 ASTNode* popNode(TreeStack* stack){
+    if(stack->top == NULL){
+        printf("Invalid syntax\n");
+        exit(0);
+    }
     TreeStackNode* temp = stack->top->next;
     ASTNode* node = stack->top->node;
     free(stack->top);
@@ -270,6 +310,7 @@ ASTNode* createOpNode(TokenType type,ASTNode* left,ASTNode* right){
         case NOTEQ:node = createASTNode(NOTEQOP,NULL);break;
         case AND:node = createASTNode(CONJUCT,NULL);break;
         case OR:node = createASTNode(DISJUNCT,NULL);break;
+        
     }
     addChild(node,left);
     addChild(node,right);

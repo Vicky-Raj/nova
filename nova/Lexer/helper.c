@@ -16,7 +16,8 @@ int isDelim(char data){
     return(data == '(' || data == ')'||
     data == '{' || data == '}'||
     data == '[' || data == ']'||
-    data == ',' || data == ';');
+    data == ',' || data == ';'|| 
+    data == ':');
 }
 
 int isArithmetic(char data){

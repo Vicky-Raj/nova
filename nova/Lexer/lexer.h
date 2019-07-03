@@ -41,6 +41,7 @@ typedef enum{
     CSQUARE,
     COMMA,
     SEMICOLON,
+    COLON,
     //Keywords
     VAR,
     //end of file

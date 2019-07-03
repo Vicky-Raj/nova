@@ -1,6 +1,8 @@
 #include "../Lexer/lexer.h"
 
 typedef enum{
+    BLOCK,
+    EXPRESSION,
     ADD,
     SUB,
     MUL,
@@ -17,6 +19,13 @@ typedef enum{
     DISJUNCT,
     NEGATE,
     DEREF,
+    INDEX,
+    LIST,
+    DICT,
+    DICTPAIR,
+    VARSTAT,
+    DEC,
+    DEF,
     TOKEN,
 }ASTNodeType;
 
@@ -29,9 +38,16 @@ typedef struct ASTNode{
 }ASTNode;
 
 //parsers
-ASTNode* parseExpression(Token** tokens,TokenType end);
+ASTNode* parseBlock(Token** tokens);
+ASTNode* parseVarStat(Token** tokens);
+ASTNode* parseDec(Token** tokens);
+ASTNode** parseDef(Token** tokens);
+ASTNode* parseExpression(Token** tokens);
 ASTNode* parseIdentifier(Token** tokens);//symbolParser.c
-ASTNode* parseVar(Token** tokens);//expressParser.c
+ASTNode* parseVar(Token** tokens);//symbolParser.c
+ASTNode* parseIndex(Token** tokens);//symbolParser.c
+ASTNode* parseList(Token** tokens);//parseComposite.c
+ASTNode* parseDict(Token** tokens);//parseComposite.c
 
 //helpers --helper.c
 void match(Token** tokens,TokenType type);

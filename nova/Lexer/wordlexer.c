@@ -26,6 +26,8 @@ int wordHandler(int ptr,char* data,TokenList* tokens){
         bool* state = (bool*)malloc(sizeof(bool));*state = 0;
         addToken(tokens,createToken(CONSTANT,BOOL,state));
     }
+    //null
+    else if(!strcmp(tempbuff,"null"))addToken(tokens,createToken(CONSTANT,null,NULL));
     //logical operators
     else if(!strcmp(tempbuff,"and"))addToken(tokens,createToken(AND,null,NULL));
     else if(!strcmp(tempbuff,"or"))addToken(tokens,createToken(OR,null,NULL));

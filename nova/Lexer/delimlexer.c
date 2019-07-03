@@ -11,6 +11,7 @@ int delimHandler(int ptr, char* data,TokenList* tokens){
         case ']':addToken(tokens,createToken(CSQUARE,null,NULL));break;
         case ',':addToken(tokens,createToken(COMMA,null,NULL));break;
         case ';':addToken(tokens,createToken(SEMICOLON,null,NULL));break;
+        case ':':addToken(tokens,createToken(COLON,null,NULL));break;
     }
     return ++ptr;
 }

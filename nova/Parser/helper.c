@@ -20,7 +20,7 @@ void addChild(ASTNode* node,ASTNode* child){
 
 void match(Token** tokens,TokenType type){
     if((*tokens)->tokenType == type)*tokens = (*tokens)->next;
-    else printf("Parse error %d %d\n",(*tokens)->tokenType,type);   
+    else {printf("Expected token %d\n",type);exit(0);}
 }
 
 
