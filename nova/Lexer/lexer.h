@@ -3,6 +3,7 @@
 #include<string.h>
 #include<stdbool.h>
 typedef long signed int int64;
+extern int line;
 typedef enum{
     CONSTANT,
     IDENTIFIER,
@@ -44,6 +45,12 @@ typedef enum{
     COLON,
     //Keywords
     VAR,
+    WHILE,
+    FOR,
+    IF,
+    ELIF,
+    ELSE,
+    OF,
     //end of file
     eof
 }TokenType;
@@ -60,7 +67,8 @@ typedef struct Token
 {
     TokenType tokenType;
     DataType dataType;
-    void* value;
+    char* value;
+    int lineNum;
     struct Token* next;
 }Token;
 
@@ -72,7 +80,7 @@ typedef struct TokenList{
 //Token functions -- lexerhelper.c
 TokenList* initTokenList();
 Token* tokenize(char* data);
-Token* createToken(TokenType tokentype,DataType datatype,void* value);
+Token* createToken(TokenType tokentype,DataType datatype,char* value);
 void addToken(TokenList* list,Token* token);
 
 //Handlers

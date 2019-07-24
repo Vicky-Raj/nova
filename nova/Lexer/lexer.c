@@ -1,5 +1,6 @@
 #include "lexer.h"
 
+int line = 1;
 Token* tokenize(char* data){
     TokenList* tokens = initTokenList();
     for(int i=0;data[i] != '\0';){
@@ -12,7 +13,7 @@ Token* tokenize(char* data){
         else if(data[i] == '"' || data[i] == '\''){
             i = strConstHandler(i,data,tokens,data[i]);
         }
-        else if(isAlphabet(data[i])){
+        else if(isAlphabet(data[i]) || data[i] == '_'){
             i = wordHandler(i,data,tokens);
         }
         else if(isDelim(data[i])){
@@ -27,6 +28,11 @@ Token* tokenize(char* data){
         else if(data[i] == '='){
             if(data[++i] == '='){addToken(tokens,createToken(EQUALEQ,null,NULL));i++;}
             else addToken(tokens,createToken(EQUAL,null,NULL));
+        }
+        else if(data[i] == '\n')
+        {
+            line++;
+            i++;
         }
         else
         {   

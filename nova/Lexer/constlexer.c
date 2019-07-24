@@ -3,25 +3,45 @@
 //Used by lexer to handle numbers
 
 int numHandler(int ptr,char* data,TokenList* tokens){
-    int64 lvalue=0,rvalue=0;double weight = 1;
-    while(isDigit(data[ptr])){
-        lvalue = lvalue * 10 + charToNum(data[ptr++]);
-    }
-    if(data[ptr] == '.'){
-        ptr++;
-        while (data[ptr])
-        {
-            rvalue = rvalue * 10 + charToNum(data[ptr++]);
-            weight = weight/10;
+    char* numString = NULL;
+    while (isDigit(data[ptr]))
+    {   
+        if(numString == NULL){
+            numString = (char*)malloc(sizeof(char)*2);
+            numString[0] = data[ptr++];
+            numString[1] = '\0';
         }
-        double* dvalue = (double*)malloc(sizeof(double));
-        *dvalue = lvalue + weight * rvalue;
-        addToken(tokens,createToken(CONSTANT,DOUBLE,dvalue));
+        else
+        {
+            int len = strlen(numString);
+            numString = (char*)realloc(numString,sizeof(char)*(len+2));
+            numString[len] = data[ptr++];
+            numString[len+1] = '\0';
+        }
+        
+    }
+    if (data[ptr] == '.')
+    {   ptr++;
+        int len = strlen(numString);
+        numString = (char*)realloc(numString,sizeof(char)*(len+3));
+        numString[len] = '.';
+        numString[len+1] = '0';
+        numString[len+2] = '\0';
+        if(isDigit(data[ptr])){
+            int len = strlen(numString);
+            numString[len-1] = data[ptr++];
+            while (isDigit(data[ptr]))
+            {
+                int len = strlen(numString);
+                numString = (char*)realloc(numString,sizeof(char)*(len+2));
+                numString[len] = data[ptr++];
+                numString[len+1] = '\0';
+            }
+        }
+        addToken(tokens,createToken(CONSTANT,DOUBLE,numString));
         return ptr;
     }
-    int64* ivalue = (int64*)malloc(sizeof(int64));
-    *ivalue = lvalue;
-    addToken(tokens,createToken(CONSTANT,INT,ivalue));
+    addToken(tokens,createToken(CONSTANT,INT,numString));
     return ptr;
 }
 

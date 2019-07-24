@@ -2,7 +2,7 @@
 
 int wordHandler(int ptr,char* data,TokenList* tokens){
     char* tempbuff = NULL;
-    while (isAlphabet(data[ptr]) || isDigit(data[ptr]))
+    while (isAlphabet(data[ptr]) || isDigit(data[ptr]) || data[ptr] == '_')
     {
         if(tempbuff == NULL){
             tempbuff = (char*)malloc(sizeof(char)*2);
@@ -16,15 +16,22 @@ int wordHandler(int ptr,char* data,TokenList* tokens){
             tempbuff[len+1] = '\0';
         }       
     }
+    //keywords
     if(!strcmp(tempbuff,"var"))addToken(tokens,createToken(VAR,null,NULL));
+    else if (!strcmp(tempbuff,"while"))addToken(tokens,createToken(WHILE,null,NULL));
+    else if (!strcmp(tempbuff,"for"))addToken(tokens,createToken(FOR,null,NULL));
+    else if (!strcmp(tempbuff,"if"))addToken(tokens,createToken(IF,null,NULL));
+    else if(!strcmp(tempbuff,"elif"))addToken(tokens,createToken(ELIF,null,NULL));
+    else if(!strcmp(tempbuff,"else"))addToken(tokens,createToken(ELSE,null,NULL));
+    else if(!strcmp(tempbuff,"of"))addToken(tokens,createToken(OF,null,NULL));
     //boolean constants
     else if(!strcmp(tempbuff,"true")){
-        bool* state = (bool*)malloc(sizeof(bool));*state =1;
-        addToken(tokens,createToken(CONSTANT,BOOL,state));
+        char* value = (char*)malloc(sizeof(char));*value = '1';
+        addToken(tokens,createToken(CONSTANT,BOOL,value));
     }
     else if(!strcmp(tempbuff,"false")){
-        bool* state = (bool*)malloc(sizeof(bool));*state = 0;
-        addToken(tokens,createToken(CONSTANT,BOOL,state));
+        char* value = (char*)malloc(sizeof(char));*value = '0';
+        addToken(tokens,createToken(CONSTANT,BOOL,value));
     }
     //null
     else if(!strcmp(tempbuff,"null"))addToken(tokens,createToken(CONSTANT,null,NULL));

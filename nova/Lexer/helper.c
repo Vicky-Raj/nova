@@ -33,11 +33,12 @@ TokenList* initTokenList(){
     tokenlist->end = NULL;
     return tokenlist;
 }
-Token* createToken(TokenType tokentype,DataType datatype,void* value){
+Token* createToken(TokenType tokentype,DataType datatype,char* value){
     Token* token = (Token*)malloc(sizeof(Token));
     token->tokenType = tokentype;
     token->dataType = datatype;
     token->value = value;
+    token->lineNum = line;
     return token;
 }
 void addToken(TokenList* list,Token* token){

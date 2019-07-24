@@ -3,8 +3,10 @@
 ASTNode* parseIdentifier(Token** tokens){
     if((*tokens)->next->tokenType == OSQUARE){
         return parseIndex(tokens);
-    }else
-    {
+    }else if((*tokens)->next->tokenType == OPARA){
+        return parseFuncCall(tokens);
+    }
+    else{
         return parseVar(tokens);
     }
     
@@ -24,11 +26,33 @@ ASTNode* parseIndex(Token** tokens){
     while((*tokens)->tokenType == OSQUARE)
     {
         match(tokens,OSQUARE);
-        addChild(index,parseExpression(tokens));
+        addChild(index,parseExpression(tokens,0));
         lastIndex = index;
         index = createASTNode(INDEX,NULL);
         addChild(index,lastIndex);
         match(tokens,CSQUARE);
     }
     return lastIndex;
+}
+
+ASTNode* parseFuncCall(Token** tokens){
+    ASTNode* callframe = createASTNode(CALL,NULL);
+    addChild(callframe,parseVar(tokens));
+    ASTNode* paramlist = createASTNode(PARAMLIST,NULL);
+    match(tokens,OPARA);
+    if((*tokens)->tokenType == CPARA){
+        match(tokens,CPARA);
+        addChild(callframe,paramlist);
+        return callframe;
+    }
+    addChild(paramlist,parseExpression(tokens,1));
+    while ((*tokens)->tokenType == COMMA){
+        match(tokens,COMMA);
+        addChild(paramlist,parseExpression(tokens,1));
+    }
+    if((*tokens)->tokenType != CPARA)invalidSyntax(tokens);
+    match(tokens,CPARA);
+    addChild(callframe,paramlist);
+    return callframe;
+
 }
