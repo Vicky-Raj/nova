@@ -1,6 +1,6 @@
 #include "parser.h"
 
-ASTNode* parseBlock(Token** tokens,bool global,bool as_stat,bool as_simple){
+ASTNode* parseBlock(Token** tokens,bool global,bool as_stat){
     ASTNode* block = createASTNode(BLOCK,NULL);
     while(1)
     {
@@ -10,36 +10,29 @@ ASTNode* parseBlock(Token** tokens,bool global,bool as_stat,bool as_simple){
             match(tokens,SEMICOLON);
         }
         else if((*tokens)->tokenType == IDENTIFIER){
-            ASTNode* lvalue = parseExpression(tokens,0);
-            if(lvalue->children[0]->type == DEREF || lvalue->children[0]->type == INDEX){
-                addChild(block,parseAssign(tokens,lvalue));
-                match(tokens,SEMICOLON);
-            }
-            else if(lvalue->children[0]->type == CALL){
-                addChild(block,lvalue);
-                match(tokens,SEMICOLON);
-            }
-            else
-            {
-                invalidSyntax(tokens);
-            }
+            addChild(block,parseAssignorCall(tokens));
+            match(tokens,SEMICOLON);
             
         }
-        else if((*tokens)->tokenType == WHILE && !as_simple)
+        else if((*tokens)->tokenType == WHILE)
         {
             match(tokens,WHILE);
             addChild(block,parseWhileLoop(tokens));
         }
-        else if((*tokens)->tokenType == FOR && !as_simple){
+        else if((*tokens)->tokenType == FOR){
 
             match(tokens,FOR);
             addChild(block,parseFor(tokens));
         }
-        else if((*tokens)->tokenType == IF && !as_simple){
+        else if((*tokens)->tokenType == IF){
             match(tokens,IF);
             addChild(block,parseIf(tokens));
         }
-        else if((!global && (*tokens)->tokenType == CCURL) || (global && (*tokens)->tokenType == eof)){
+        else if((*tokens)->tokenType == FUNC && global){
+            match(tokens,FUNC);
+            addChild(block,parseFunc(tokens));
+        }
+        else if((!global && (*tokens)->tokenType == CCURL) || (*tokens)->tokenType == eof){
             break;
         }
         else
@@ -59,7 +52,7 @@ ASTNode* parseVarStat(Token** tokens){
         ASTNode* id = createASTNode(TOKEN,*tokens);
         match(tokens,IDENTIFIER);
         match(tokens,EQUAL);
-        ASTNode* value = parseExpression(tokens,0);
+        ASTNode* value = parseExpression(tokens,true);
         addChild(def,id);
         addChild(def,value);
         addChild(varstat,def);
@@ -91,8 +84,21 @@ ASTNode* parseVarStat(Token** tokens){
         }
         else{printf("Expected an identifier at line %d\n",(*tokens)->lineNum);exit(0);}
     }
-
     return varstat;
+}
+
+ASTNode* parseAssignorCall(Token** tokens){
+    ASTNode* lvalue = parseExpression(tokens,true);
+    if(lvalue->children[0]->type == DEREF || lvalue->children[0]->type == INDEX){
+        return parseAssign(tokens,lvalue);
+    }
+    else if(lvalue->children[0]->type == CALL || lvalue->children[0]->type == MCALL){
+        return lvalue;
+    }
+    else
+    {
+        invalidSyntax(tokens);
+    }
 }
 
 int main(){
@@ -103,5 +109,6 @@ int main(){
     char* codeBuff = (char*)malloc(flen);
     fread(codeBuff,sizeof(char),flen,file);
     Token* head = tokenize(codeBuff);
-    ASTNode* root = parseBlock(&head,true,false,false);
+    ASTNode* root = parseBlock(&head,true,false);
+    printf("%d\n",root->children[0]->children[0]->children[1]->type);
 }

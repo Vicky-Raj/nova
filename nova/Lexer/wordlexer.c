@@ -23,7 +23,7 @@ int wordHandler(int ptr,char* data,TokenList* tokens){
     else if (!strcmp(tempbuff,"if"))addToken(tokens,createToken(IF,null,NULL));
     else if(!strcmp(tempbuff,"elif"))addToken(tokens,createToken(ELIF,null,NULL));
     else if(!strcmp(tempbuff,"else"))addToken(tokens,createToken(ELSE,null,NULL));
-    else if(!strcmp(tempbuff,"of"))addToken(tokens,createToken(OF,null,NULL));
+    else if(!strcmp(tempbuff,"func"))addToken(tokens,createToken(FUNC,null,NULL));
     //boolean constants
     else if(!strcmp(tempbuff,"true")){
         char* value = (char*)malloc(sizeof(char));*value = '1';

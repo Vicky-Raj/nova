@@ -15,6 +15,7 @@ void missingToken(TokenType type,Token** tokens){
         case CSQUARE:tok = ']';break;
         case CCURL:tok = '}';break;
         case OPARA:tok = '(';break;
+        case IDENTIFIER:printf("Missing identifier at line %d\n",(*tokens)->lineNum);exit(0);break;
     }
     printf("Missing '%c' at line %d\n",tok,(*tokens)->lineNum);
     exit(0);

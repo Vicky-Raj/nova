@@ -4,7 +4,9 @@ ASTNode* parseIdentifier(Token** tokens){
     if((*tokens)->next->tokenType == OSQUARE){
         return parseIndex(tokens);
     }else if((*tokens)->next->tokenType == OPARA){
-        return parseFuncCall(tokens);
+        ASTNode* lvalue = parseFuncCall(tokens);
+        if((*tokens)->tokenType == DOT)return parseMethodCall(tokens,lvalue);
+        else return lvalue;
     }
     else{
         return parseVar(tokens);

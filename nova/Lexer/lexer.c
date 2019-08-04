@@ -29,6 +29,10 @@ Token* tokenize(char* data){
             if(data[++i] == '='){addToken(tokens,createToken(EQUALEQ,null,NULL));i++;}
             else addToken(tokens,createToken(EQUAL,null,NULL));
         }
+        else if(data[i] == '.'){
+            addToken(tokens,createToken(DOT,null,NULL));
+            i++;
+        }
         else if(data[i] == '\n')
         {
             line++;

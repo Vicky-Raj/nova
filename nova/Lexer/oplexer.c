@@ -27,6 +27,7 @@ int arithmeticHandler(int ptr,char* data,TokenList* tokens){
     }
 }
 
+
 int relationalHandler(int ptr,char* data,TokenList* tokens){
     if(data[ptr+1] == '='){
         switch (data[ptr++])

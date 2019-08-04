@@ -34,7 +34,7 @@ typedef enum{
     DEC,
     DEF,
     CALL,
-    PARAMLIST,
+    MCALL,
     WHILELOOP,
     FORLOOP,
     FORITER,
@@ -47,6 +47,8 @@ typedef enum{
     IFSTAT,
     ELIFSTAT,
     ELSESTAT,
+    FUNCTION,
+    PARAMLIST,
     TOKEN,
 }ASTNodeType;
 
@@ -59,7 +61,7 @@ typedef struct ASTNode{
 }ASTNode;
 
 //parsers
-ASTNode* parseBlock(Token** tokens,bool global,bool as_stat,bool as_simple);
+ASTNode* parseBlock(Token** tokens,bool global,bool as_stat);
 ASTNode* parseVarStat(Token** tokens);
 ASTNode* parseDec(Token** tokens);
 ASTNode** parseDef(Token** tokens);
@@ -76,6 +78,9 @@ ASTNode* parseIf(Token** tokens);
 ASTNode* parseFor(Token** tokens);
 ASTNode* parseForLoop(Token** tokens);
 ASTNode* parseForIter(Token** tokens);
+ASTNode* parseAssignorCall(Token** tokens);
+ASTNode* parseFunc(Token** tokens);
+ASTNode* parseMethodCall(Token** tokens,ASTNode* lvalue);
 
 //helpers --helper.c
 void match(Token** tokens,TokenType type);

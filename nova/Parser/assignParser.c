@@ -15,7 +15,7 @@ ASTNode* parseAssign(Token** tokens,ASTNode* lvalue){
             case PERCENTAGEEQ:node = createASTNode(MODASSIGN,NULL);match(tokens,PERCENTAGEEQ);break;
             case CARETEQ:node = createASTNode(POWASSIGN,NULL);match(tokens,CARETEQ);break;
         }
-        rvalue = parseExpression(tokens,0);
+        rvalue = parseExpression(tokens,true);
         addChild(node,lvalue);
         addChild(node,rvalue);
         return node;

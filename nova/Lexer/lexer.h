@@ -29,6 +29,8 @@ typedef enum{
     LESSEREQ,
     EQUALEQ,
     NOTEQ,
+    //. operator
+    DOT,
     //Logical Operators
     AND,
     OR,
@@ -50,7 +52,7 @@ typedef enum{
     IF,
     ELIF,
     ELSE,
-    OF,
+    FUNC,
     //end of file
     eof
 }TokenType;
