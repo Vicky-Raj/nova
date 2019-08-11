@@ -14,6 +14,7 @@ typedef enum{
     SLASH,
     CARET,
     PERCENTAGE,
+    NEG,
     //Assignment Operators
     EQUAL,
     PLUSEQ,
@@ -53,6 +54,9 @@ typedef enum{
     ELIF,
     ELSE,
     FUNC,
+    BREAK,
+    CONTINUE,
+    RETURN,
     //end of file
     eof
 }TokenType;

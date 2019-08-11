@@ -2,13 +2,13 @@
 
 typedef enum{
     BLOCK,
-    EXPRESSION,
     ADD,
     SUB,
     MUL,
     DIV,
     MODULO,
     POW,
+    NEGATIVE,
     ASSIGN,
     PLUSASSIGN,
     MINUSASSIGN,
@@ -49,6 +49,9 @@ typedef enum{
     ELSESTAT,
     FUNCTION,
     PARAMLIST,
+    BREAKSTAT,
+    CONTINUESTAT,
+    RETURNSTAT,
     TOKEN,
 }ASTNodeType;
 
@@ -68,7 +71,7 @@ ASTNode** parseDef(Token** tokens);
 ASTNode* parseExpression(Token** tokens,bool strayCPARA);
 ASTNode* parseIdentifier(Token** tokens);//symbolParser.c
 ASTNode* parseVar(Token** tokens);//symbolParser.c
-ASTNode* parseIndex(Token** tokens);//symbolParser.c
+ASTNode* parseIndex(Token** tokens,ASTNode* id);//symbolParser.c
 ASTNode* parseFuncCall(Token** tokens);//symbolParser.c
 ASTNode* parseList(Token** tokens);//parseComposite.c
 ASTNode* parseDict(Token** tokens);//parseComposite.c

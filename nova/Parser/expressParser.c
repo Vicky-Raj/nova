@@ -23,7 +23,8 @@ TokenStack* initTokenStack();
 void pushToken(TokenStack* stack,Token* token);
 void pushNode(TreeStack* stack, ASTNode* node);
 Token* popToken(TokenStack* stack,Token** tokens);
-Token* createZeroToken();
+void reduce(TokenStack* opstack,TreeStack* resultstack,Token** tokens);
+Token* createNegToken();
 ASTNode* popNode(TreeStack* stack,Token** tokens);
 int emptyTreeStack(TreeStack* stack);
 int emptyTokenStack(TokenStack* stack);
@@ -48,186 +49,87 @@ ASTNode* parseExpression(Token** tokens,bool strayCPARA){
         if(last != NULL && (last->tokenType == CONSTANT || last->tokenType == IDENTIFIER) && (lookahead == CONSTANT || lookahead == IDENTIFIER)){
             invalidSyntax(tokens);
         }
-
-        if(isRealationalToken(lookahead)){
-            if(!emptyTokenStack(relationalStack)){
-                invalidSyntax(tokens);
-            }else
-            {
-                while(!emptyTokenStack(arithmeticStack) && arithmeticStack->top->token->tokenType != OPARA)
-                {
-                    ASTNode* right = popNode(resultStack,tokens);
-                    ASTNode* left = popNode(resultStack,tokens);
-                    pushNode(resultStack,createOpNode(popToken(arithmeticStack,tokens)->tokenType,left,right));
-                }
-                
-                pushToken(relationalStack,*tokens);
-            }
-        }
-
-        else if(isLogicalToken(lookahead)){
-            while(!emptyTokenStack(arithmeticStack) && arithmeticStack->top->token->tokenType != OPARA){
-                ASTNode* right = popNode(resultStack,tokens);
-                ASTNode* left = popNode(resultStack,tokens);
-                pushNode(resultStack,createOpNode(popToken(arithmeticStack,tokens)->tokenType,left,right));
-            }
-            if(!emptyTokenStack(relationalStack))
-            {
-                ASTNode* right = popNode(resultStack,tokens);
-                ASTNode* left = popNode(resultStack,tokens);
-                pushNode(resultStack,createOpNode(popToken(relationalStack,tokens)->tokenType,left,right));   
-            }
-            while(!emptyTokenStack(logicalStack) && 
-            isHigher(logicalStack->top->token->tokenType,lookahead)&&
-            logicalStack->top->token->tokenType != OPARA
-            )
-            {
-                if(logicalStack->top->token->tokenType == NOT){
-                    ASTNode* notOperand = popNode(resultStack,tokens);
-                    ASTNode* notOperator = createASTNode(NEGATE,NULL);
-                    addChild(notOperator,notOperand);
-                    pushNode(resultStack,notOperator);
-                    popToken(logicalStack,tokens);
-                }else
-                {
-                    ASTNode* right = popNode(resultStack,tokens);
-                    ASTNode* left = popNode(resultStack,tokens);
-                    pushNode(resultStack,createOpNode(popToken(logicalStack,tokens)->tokenType,left,right));   
-                }
-                
-            }
-            pushToken(logicalStack,*tokens);                     
-        }
-
-        else if(isArithmeticToken(lookahead)){
+        
+        // +,-,*,/.....
+        if(isArithmeticToken(lookahead)){
+            
             if((last == NULL && lookahead == MINUS) || last != NULL && lookahead == MINUS &&(isArithmeticToken(last->tokenType) || last->tokenType == OPARA)){
-                pushNode(resultStack,createASTNode(TOKEN,createZeroToken()));
-                pushToken(arithmeticStack,*tokens);
+                pushToken(arithmeticStack,createNegToken());
                 last = *tokens;
                 *tokens = (*tokens)->next;
                 continue;
             }
-
-            while(!emptyTokenStack(arithmeticStack) &&
+                
+            while (!emptyTokenStack(arithmeticStack) && 
             arithmeticStack->top->token->tokenType != OPARA &&
             isHigher(arithmeticStack->top->token->tokenType,lookahead)){
-                ASTNode* right = popNode(resultStack,tokens);
-                ASTNode* left = popNode(resultStack,tokens);
-                pushNode(resultStack,createOpNode(popToken(arithmeticStack,tokens)->tokenType,left,right));
+
+            reduce(arithmeticStack,resultStack,tokens);
+            
             }
+
             pushToken(arithmeticStack,*tokens);
         }
 
+        else if(isRealationalToken(lookahead)){
+            while (!emptyTokenStack(arithmeticStack) && arithmeticStack->top->token->tokenType != OPARA)
+            reduce(arithmeticStack,resultStack,tokens);
+            
+            while (!emptyTokenStack(relationalStack) && relationalStack->top->token->tokenType != OPARA)
+            reduce(relationalStack,resultStack,tokens);
+
+            pushToken(relationalStack,*tokens);
+            
+        }
+
+        else if(isLogicalToken(lookahead)){
+            while (!emptyTokenStack(arithmeticStack) && arithmeticStack->top->token->tokenType != OPARA)
+            reduce(arithmeticStack,resultStack,tokens);
+
+            while (!emptyTokenStack(relationalStack) && relationalStack->top->token->tokenType != OPARA)
+            reduce(relationalStack,resultStack,tokens);
+
+            while(!emptyTokenStack(logicalStack) && logicalStack->top->token->tokenType != OPARA && isHigher(logicalStack->top->token->tokenType,lookahead)){
+                reduce(logicalStack,resultStack,tokens);
+            }
+
+            pushToken(logicalStack,*tokens);
+        }
+
+        // (
         else if(lookahead == OPARA){
-        pushToken(arithmeticStack,*tokens);
-        pushToken(logicalStack,*tokens);
+            pushToken(arithmeticStack,*tokens);
+            pushToken(relationalStack,*tokens);
+            pushToken(logicalStack,*tokens);
         }
 
         else if(lookahead == CPARA){
-            if (strayCPARA && emptyTokenStack(arithmeticStack)){
-                if(!emptyTokenStack(relationalStack))
-                {
-                    ASTNode* right = popNode(resultStack,tokens);
-                    ASTNode* left = popNode(resultStack,tokens);
-                    pushNode(resultStack,createOpNode(popToken(relationalStack,tokens)->tokenType,left,right));   
-                }
-                while(!emptyTokenStack(logicalStack))
-                {
-                    if(logicalStack->top->token->tokenType == NOT){
-                        ASTNode* notOperand = popNode(resultStack,tokens);
-                        ASTNode* notOperator = createASTNode(NEGATE,NULL);
-                        addChild(notOperator,notOperand);
-                        pushNode(resultStack,notOperator);
-                        popToken(logicalStack,tokens);
-                    }else
-                    {
-                        ASTNode* right = popNode(resultStack,tokens);
-                        ASTNode* left = popNode(resultStack,tokens);
-                        pushNode(resultStack,createOpNode(popToken(logicalStack,tokens)->tokenType,left,right));   
-                    }
-                }
 
-                ASTNode* expression = createASTNode(EXPRESSION,NULL);
-                if(!emptyTreeStack(resultStack)){
-                    addChild(expression,popNode(resultStack,tokens));
-                }
-                return expression;
+
+
+            while(!emptyTokenStack(arithmeticStack) && arithmeticStack->top->token->tokenType != OPARA)
+            reduce(arithmeticStack,resultStack,tokens);
+            if(emptyTokenStack(arithmeticStack) && !strayCPARA)invalidSyntax(tokens);
+            else if(!emptyTokenStack(arithmeticStack) && arithmeticStack->top->token->tokenType == OPARA)popToken(arithmeticStack,tokens);
+
+
+            while (!emptyTokenStack(relationalStack) && relationalStack->top->token->tokenType != OPARA)
+            reduce(relationalStack,resultStack,tokens);
+            if(emptyTokenStack(relationalStack) && !strayCPARA)invalidSyntax(tokens);
+            else if(!emptyTokenStack(relationalStack) && relationalStack->top->token->tokenType == OPARA)popToken(relationalStack,tokens);
+
+
+
+            while (!emptyTokenStack(logicalStack) && logicalStack->top->token->tokenType != OPARA)
+            reduce(logicalStack,resultStack,tokens);
+            if(emptyTokenStack(logicalStack) && !strayCPARA)invalidSyntax(tokens);
+            else if(!emptyTokenStack(logicalStack) && logicalStack->top->token->tokenType == OPARA)popToken(logicalStack,tokens);
+
+            if(strayCPARA && emptyTokenStack(arithmeticStack) && emptyTokenStack(relationalStack) && emptyTokenStack(logicalStack)){
+                return popNode(resultStack,tokens);
             }
-            
-            else if(strayCPARA && !emptyTokenStack(arithmeticStack)){
-                while(!emptyTokenStack(arithmeticStack) && arithmeticStack->top->token->tokenType != OPARA){
-                    ASTNode* right = popNode(resultStack,tokens);
-                    ASTNode* left = popNode(resultStack,tokens);
-                    pushNode(resultStack,createOpNode(popToken(arithmeticStack,tokens)->tokenType,left,right));
-                }
-                
-                if(!emptyTokenStack(arithmeticStack))popToken(arithmeticStack,tokens);
-
-                if(!emptyTokenStack(relationalStack))
-                {
-                    ASTNode* right = popNode(resultStack,tokens);
-                    ASTNode* left = popNode(resultStack,tokens);
-                    pushNode(resultStack,createOpNode(popToken(relationalStack,tokens)->tokenType,left,right));
-                }
-
-                while(!emptyTokenStack(logicalStack) && logicalStack->top->token->tokenType != OPARA)
-                {
-                    if(logicalStack->top->token->tokenType == NOT){
-                        ASTNode* notOperand = popNode(resultStack,tokens);
-                        ASTNode* notOperator = createASTNode(NEGATE,NULL);
-                        addChild(notOperator,notOperand);
-                        pushNode(resultStack,notOperator);
-                        popToken(logicalStack,tokens);
-                    }else
-                    {
-                        ASTNode* right = popNode(resultStack,tokens);
-                        ASTNode* left = popNode(resultStack,tokens);
-                        pushNode(resultStack,createOpNode(popToken(logicalStack,tokens)->tokenType,left,right));   
-                    }
-                }
-
-                if(!emptyTokenStack(logicalStack))popToken(logicalStack,tokens);
-
-                if(emptyTokenStack(arithmeticStack) && emptyTokenStack(logicalStack)){
-                    ASTNode* expression = createASTNode(EXPRESSION,NULL);
-                    if(!emptyTreeStack(resultStack)){
-                        addChild(expression,popNode(resultStack,tokens));
-                    }
-                    return expression;
-                }
-
-            }
-            
-            while(arithmeticStack->top->token->tokenType != OPARA){
-                ASTNode* right = popNode(resultStack,tokens);
-                ASTNode* left = popNode(resultStack,tokens);
-                pushNode(resultStack,createOpNode(popToken(arithmeticStack,tokens)->tokenType,left,right));
-            }
-            if(!emptyTokenStack(relationalStack))
-            {
-                ASTNode* right = popNode(resultStack,tokens);
-                ASTNode* left = popNode(resultStack,tokens);
-                pushNode(resultStack,createOpNode(popToken(relationalStack,tokens)->tokenType,left,right));
-            }
-            while(logicalStack->top->token->tokenType != OPARA)
-            {
-                if(logicalStack->top->token->tokenType == NOT){
-                    ASTNode* notOperand = popNode(resultStack,tokens);
-                    ASTNode* notOperator = createASTNode(NEGATE,NULL);
-                    addChild(notOperator,notOperand);
-                    pushNode(resultStack,notOperator);
-                    popToken(logicalStack,tokens);
-                }else
-                {
-                    ASTNode* right = popNode(resultStack,tokens);
-                    ASTNode* left = popNode(resultStack,tokens);
-                    pushNode(resultStack,createOpNode(popToken(logicalStack,tokens)->tokenType,left,right));   
-                }
-            }
-            popToken(logicalStack,tokens);
-            popToken(arithmeticStack,tokens);
         }
-        
+
         else if(lookahead == CONSTANT){
             pushNode(resultStack,createASTNode(TOKEN,*tokens));
         }
@@ -261,38 +163,15 @@ ASTNode* parseExpression(Token** tokens,bool strayCPARA){
         *tokens = (*tokens)->next;
     }
     while (!emptyTokenStack(arithmeticStack))
-    {
-        ASTNode* right = popNode(resultStack,tokens);
-        ASTNode* left = popNode(resultStack,tokens);
-        pushNode(resultStack,createOpNode(popToken(arithmeticStack,tokens)->tokenType,left,right));
-    }
-    if(!emptyTokenStack(relationalStack))
-    {
-        ASTNode* right = popNode(resultStack,tokens);
-        ASTNode* left = popNode(resultStack,tokens);
-        pushNode(resultStack,createOpNode(popToken(relationalStack,tokens)->tokenType,left,right));   
-    }
+    reduce(arithmeticStack,resultStack,tokens);
+
+    while (!emptyTokenStack(relationalStack))
+    reduce(relationalStack,resultStack,tokens);
+
     while(!emptyTokenStack(logicalStack))
-    {
-        if(logicalStack->top->token->tokenType == NOT){
-            ASTNode* notOperand = popNode(resultStack,tokens);
-            ASTNode* notOperator = createASTNode(NEGATE,NULL);
-            addChild(notOperator,notOperand);
-            pushNode(resultStack,notOperator);
-            popToken(logicalStack,tokens);
-        }else
-        {
-            ASTNode* right = popNode(resultStack,tokens);
-            ASTNode* left = popNode(resultStack,tokens);
-            pushNode(resultStack,createOpNode(popToken(logicalStack,tokens)->tokenType,left,right));   
-        }
-    }
+    reduce(logicalStack,resultStack,tokens);
     
-    ASTNode* expression = createASTNode(EXPRESSION,NULL);
-    if(!emptyTreeStack(resultStack)){
-        addChild(expression,popNode(resultStack,tokens));
-    }
-    return expression;
+    return popNode(resultStack,tokens);
 }
 
 void pushToken(TokenStack* stack,Token* token){
@@ -361,6 +240,7 @@ int opToNum(TokenType type){
     if(type == PLUS || type == MINUS || type == OR)return 1;
     if(type == STAR || type == SLASH || type == PERCENTAGE || type == AND)return 2;
     if(type == CARET || type == NOT)return 3;
+    if(type == NEG)return 4;
 }
 
 ASTNode* createOpNode(TokenType type,ASTNode* left,ASTNode* right){
@@ -381,7 +261,6 @@ ASTNode* createOpNode(TokenType type,ASTNode* left,ASTNode* right){
         case NOTEQ:node = createASTNode(NOTEQOP,NULL);break;
         case AND:node = createASTNode(CONJUCT,NULL);break;
         case OR:node = createASTNode(DISJUNCT,NULL);break;
-        
     }
     addChild(node,left);
     addChild(node,right);
@@ -398,12 +277,33 @@ int isLogicalToken(TokenType type){
     return(type == AND || type == OR || type == NOT);
 }
 
-Token* createZeroToken(){
-    Token* token = (Token*)malloc(sizeof(Token));
-    token->tokenType = CONSTANT;
-    token->dataType = INT;
-    token->value = (char*)malloc(sizeof(char)*2);
-    token->value[0] = '0';
-    token->value[1] = '\0';
-    return token;
+
+Token* createNegToken(){
+    Token* negtoken = (Token*)malloc(sizeof(Token));
+    negtoken->tokenType = NEG;
+    negtoken->lineNum = line;
+    negtoken->next = NULL;
+    negtoken->value = NULL;
+    return negtoken;
+}
+
+
+void reduce(TokenStack* opstack,TreeStack* resultstack,Token** tokens){
+    if(opstack->top->token->tokenType == NEG){
+        ASTNode* negative = createASTNode(NEGATIVE,NULL);
+        addChild(negative,popNode(resultstack,tokens));
+        pushNode(resultstack,negative);
+        popToken(opstack,tokens);
+    }
+    else if(opstack->top->token->tokenType == NOT){
+        ASTNode* negate = createASTNode(NEGATE,NULL);
+        addChild(negate,popNode(resultstack,tokens));
+        pushNode(resultstack,negate);
+        popToken(opstack,tokens);
+    }
+    else{
+    ASTNode* right = popNode(resultstack,tokens);
+    ASTNode* left = popNode(resultstack,tokens);
+    pushNode(resultstack,createOpNode(popToken(opstack,tokens)->tokenType,left,right));
+    }
 }

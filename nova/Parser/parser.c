@@ -32,6 +32,23 @@ ASTNode* parseBlock(Token** tokens,bool global,bool as_stat){
             match(tokens,FUNC);
             addChild(block,parseFunc(tokens));
         }
+        else if((*tokens)->tokenType == BREAK && !global){
+            match(tokens,BREAK);
+            addChild(block,createASTNode(BREAKSTAT,NULL));
+            match(tokens,SEMICOLON);
+        }
+        else if((*tokens)->tokenType == CONTINUE && !global){
+            match(tokens,CONTINUE);
+            addChild(block,createASTNode(CONTINUESTAT,NULL));
+            match(tokens,SEMICOLON);
+        }
+        else if((*tokens)->tokenType == RETURN && !global){
+            match(tokens,RETURN);
+            ASTNode* returnstat = createASTNode(RETURNSTAT,NULL);
+            if((*tokens)->tokenType != SEMICOLON)addChild(returnstat,parseExpression(tokens,false));
+            addChild(block,returnstat);
+            match(tokens,SEMICOLON);
+        }
         else if((!global && (*tokens)->tokenType == CCURL) || (*tokens)->tokenType == eof){
             break;
         }
@@ -57,6 +74,9 @@ ASTNode* parseVarStat(Token** tokens){
         addChild(def,value);
         addChild(varstat,def);
     }
+    else if((*tokens)->tokenType == IDENTIFIER && ((*tokens)->next->tokenType != COMMA && (*tokens)->next->tokenType != SEMICOLON)){
+        invalidSyntax(tokens);
+    }
     else if((*tokens)->tokenType == IDENTIFIER){
         ASTNode* dec = createASTNode(DEC,*tokens);
         match(tokens,IDENTIFIER);
@@ -72,10 +92,13 @@ ASTNode* parseVarStat(Token** tokens){
             ASTNode* id = createASTNode(TOKEN,*tokens);
             match(tokens,IDENTIFIER);
             match(tokens,EQUAL);
-            ASTNode* value = parseExpression(tokens,0);
+            ASTNode* value = parseExpression(tokens,false);
             addChild(def,id);
             addChild(def,value);
             addChild(varstat,def);
+        }
+        else if((*tokens)->tokenType == IDENTIFIER && ((*tokens)->next->tokenType != COMMA && (*tokens)->next->tokenType != SEMICOLON)){
+            invalidSyntax(tokens);
         }
         else if((*tokens)->tokenType == IDENTIFIER){
             ASTNode* dec = createASTNode(DEC,*tokens);
@@ -89,26 +112,14 @@ ASTNode* parseVarStat(Token** tokens){
 
 ASTNode* parseAssignorCall(Token** tokens){
     ASTNode* lvalue = parseExpression(tokens,true);
-    if(lvalue->children[0]->type == DEREF || lvalue->children[0]->type == INDEX){
+    if(lvalue->type == DEREF || lvalue->type == INDEX){ 
         return parseAssign(tokens,lvalue);
     }
-    else if(lvalue->children[0]->type == CALL || lvalue->children[0]->type == MCALL){
+    else if(lvalue->type == CALL || lvalue->type == MCALL){
         return lvalue;
     }
     else
     {
         invalidSyntax(tokens);
     }
-}
-
-int main(){
-    FILE* file = fopen("prog.nova","r");
-    fseek(file,0,SEEK_END);
-    int flen = ftell(file);
-    fseek(file,0,SEEK_SET);
-    char* codeBuff = (char*)malloc(flen);
-    fread(codeBuff,sizeof(char),flen,file);
-    Token* head = tokenize(codeBuff);
-    ASTNode* root = parseBlock(&head,true,false);
-    printf("%d\n",root->children[0]->children[0]->children[1]->type);
 }

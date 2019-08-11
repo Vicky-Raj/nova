@@ -60,7 +60,6 @@ ASTNode* parseForLoop(Token** tokens){
     match(tokens,SEMICOLON);
     }
     addChild(forloop,forcon);
-
     if((*tokens)->tokenType == CPARA)match(tokens,CPARA);
     else
     {
@@ -73,7 +72,6 @@ ASTNode* parseForLoop(Token** tokens){
         match(tokens,CPARA);
     }
     addChild(forloop,forpost);
-
     if((*tokens)->tokenType == OCURL){
         match(tokens,OCURL);
         block = parseBlock(tokens,false,false);
@@ -81,7 +79,6 @@ ASTNode* parseForLoop(Token** tokens){
     }else block = parseBlock(tokens,false,true);
 
     addChild(forloop,block);
-
     return forloop;
     
 }
@@ -106,16 +103,13 @@ ASTNode* parseForIter(Token** tokens){
         match(tokens,IDENTIFIER);
     }
     match(tokens,COLON);
-    token = createASTNode(TOKEN,*tokens);
-    addChild(iterarrs,token);
-    match(tokens,IDENTIFIER);
+    if((*tokens)->tokenType == CPARA)invalidSyntax(tokens);
+    addChild(iterarrs,parseExpression(tokens,true));
     while ((*tokens)->tokenType == COMMA)
     {
         match(tokens,COMMA);
-        if((*tokens)->tokenType != IDENTIFIER)invalidSyntax(tokens);
-        token = createASTNode(TOKEN,*tokens);
-        addChild(iterarrs,token);
-        match(tokens,IDENTIFIER);
+        if((*tokens)->tokenType == CPARA)invalidSyntax(tokens);
+        addChild(iterarrs,parseExpression(tokens,true));
     }
     match(tokens,CPARA);
     if((*tokens)->tokenType == OCURL){
